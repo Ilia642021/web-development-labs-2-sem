@@ -1,5 +1,5 @@
-const { Sequelize } = require('sequelize');
-require('dotenv').config();
+import { Sequelize } from 'sequelize';
+import 'dotenv/config';   // ← тоже здесь, чтобы работало независимо
 
 const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -9,20 +9,12 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     dialect: process.env.DB_DIALECT || 'postgres',
-    logging: false,               // отключить логи SQL-запросов (можно включить true для отладки)
-    dialectOptions: {
-      ssl: false                  // если в будущем будешь использовать облако — можно включить
-    }
+    logging: false,
   }
 );
 
-// Проверка соединения при запуске (для отладки)
 sequelize.authenticate()
-  .then(() => {
-    console.log('→ Подключение к PostgreSQL успешно');
-  })
-  .catch(err => {
-    console.error('→ Ошибка подключения к базе:', err.message);
-  });
+  .then(() => console.log('→ Подключение к PostgreSQL успешно'))
+  .catch(err => console.error('→ Ошибка подключения к базе:', err.message));
 
-module.exports = sequelize;
+export default sequelize;
