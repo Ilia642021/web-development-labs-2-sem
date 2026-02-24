@@ -27,13 +27,36 @@ router.post('/', async (req, res) => {
   }
 });
 
-// GET /events — список всех мероприятий
+// GET /events — список всех мероприятий с пагинацией
 router.get('/', async (req, res) => {
   try {
-    const events = await Event.findAll({
-      include: [{ model: User, attributes: ['id', 'name', 'email'] }]
+    // Параметры пагинации из query (?page=2&limit=10)
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    // Вычисляем offset (с какого элемента начинать)
+    const offset = (page - 1) * limit;
+
+    // Получаем данные с пагинацией + общее количество для клиента
+    const { count, rows: events } = await Event.findAndCountAll({
+      limit,
+      offset,
+      include: [{ model: User, attributes: ['id', 'name', 'email'] }],
+      order: [['createdAt', 'DESC']], // сортировка по дате создания, новые сверху
     });
-    res.json(events);
+
+    // Формируем ответ с мета-данными
+    res.json({
+      data: events,
+      pagination: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit),
+        hasNext: page * limit < count,
+        hasPrev: page > 1,
+      },
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Ошибка сервера' });
