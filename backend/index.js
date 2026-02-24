@@ -12,12 +12,16 @@ import morgan from 'morgan';
 
 import eventsRouter from './routes/events.js';
 
+import rateLimiter from './middlewares/rateLimiter.js';
+
 
 const app = express();
 
 app.use(morgan('dev'));
+app.use(rateLimiter);
 app.use(cors());
 app.use(express.json());
+
 app.use('/users', usersRouter);
 app.use('/events', eventsRouter);
 
