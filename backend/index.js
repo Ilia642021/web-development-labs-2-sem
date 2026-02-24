@@ -44,8 +44,24 @@ const swaggerOptions = {
         url: `http://localhost:${process.env.PORT || 5000}`,
       },
     ],
+    components: {
+      schemas: {
+        Event: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            title: { type: 'string' },
+            description: { type: 'string' },
+            date: { type: 'string', format: 'date-time' },
+            createdBy: { type: 'integer' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
+          }
+        }
+      }
+    }
   },
-  apis: ['./routes/*.js'], // путь к файлам с JSDoc-аннотациями
+  apis: ['./routes/*.js'],
 };
 
 const specs = swaggerJsdoc(swaggerOptions);

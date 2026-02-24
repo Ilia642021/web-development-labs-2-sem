@@ -4,7 +4,68 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
-// POST /events
+/**
+ * @swagger
+ * tags:
+ *   name: Events
+ *   description: Операции с мероприятиями
+ */
+
+/**
+ * @swagger
+ * /events:
+ *   post:
+ *     summary: Создать новое мероприятие
+ *     tags: [Events]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - date
+ *               - createdBy
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *               createdBy:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Мероприятие создано
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 title:
+ *                   type: string
+ *                 description:
+ *                   type: string
+ *                 date:
+ *                   type: string
+ *                   format: date-time
+ *                 createdBy:
+ *                   type: integer
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Отсутствуют обязательные поля
+ *       404:
+ *         description: Пользователь (createdBy) не найден
+ *       500:
+ *         description: Ошибка сервера
+ */
 router.post('/', async (req, res, next) => {
   const { title, description, date, createdBy } = req.body;
 
@@ -25,7 +86,55 @@ router.post('/', async (req, res, next) => {
   res.status(201).json(event);
 });
 
-// GET /events (с пагинацией)
+/**
+ * @swagger
+ * /events:
+ *   get:
+ *     summary: Получить список мероприятий с пагинацией
+ *     tags: [Events]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Номер страницы
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Количество записей на странице
+ *     responses:
+ *       200:
+ *         description: Список мероприятий
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Event'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *                     hasNext:
+ *                       type: boolean
+ *                     hasPrev:
+ *                       type: boolean
+ *       500:
+ *         description: Ошибка сервера
+ */
 router.get('/', async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
@@ -51,7 +160,55 @@ router.get('/', async (req, res, next) => {
   });
 });
 
-// GET /events/:id
+/**
+ * @swagger
+ * /events/{id}:
+ *   get:
+ *     summary: Получить мероприятие по ID
+ *     tags: [Events]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID мероприятия
+ *     responses:
+ *       200:
+ *         description: Данные мероприятия
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 title:
+ *                   type: string
+ *                 description:
+ *                   type: string
+ *                 date:
+ *                   type: string
+ *                   format: date-time
+ *                 createdBy:
+ *                   type: integer
+ *                 User:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *       404:
+ *         description: Мероприятие не найдено
+ *       500:
+ *         description: Ошибка сервера
+ */
 router.get('/:id', async (req, res, next) => {
   const event = await Event.findByPk(req.params.id, {
     include: [{ model: User, attributes: ['id', 'name', 'email'] }],
@@ -66,7 +223,45 @@ router.get('/:id', async (req, res, next) => {
   res.json(event);
 });
 
-// PUT /events/:id
+/**
+ * @swagger
+ * /events/{id}:
+ *   put:
+ *     summary: Обновить мероприятие
+ *     tags: [Events]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID мероприятия
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Обновлённое мероприятие
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Event'
+ *       404:
+ *         description: Мероприятие не найдено
+ *       500:
+ *         description: Ошибка сервера
+ */
 router.put('/:id', async (req, res, next) => {
   const event = await Event.findByPk(req.params.id);
 
@@ -80,7 +275,27 @@ router.put('/:id', async (req, res, next) => {
   res.json(event);
 });
 
-// DELETE /events/:id
+/**
+ * @swagger
+ * /events/{id}:
+ *   delete:
+ *     summary: Удалить мероприятие
+ *     tags: [Events]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID мероприятия
+ *     responses:
+ *       204:
+ *         description: Мероприятие удалено (нет содержимого)
+ *       404:
+ *         description: Мероприятие не найдено
+ *       500:
+ *         description: Ошибка сервера
+ */
 router.delete('/:id', async (req, res, next) => {
   const event = await Event.findByPk(req.params.id);
 
