@@ -3,7 +3,59 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
-// POST /users
+/**
+ * @swagger
+ * tags:
+ *   name: Users
+ *   description: Операции с пользователями
+ */
+
+/**
+ * @swagger
+ * /users:
+ *   post:
+ *     summary: Создать нового пользователя
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       201:
+ *         description: Пользователь создан
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 name:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Отсутствуют обязательные поля
+ *       409:
+ *         description: Email уже существует
+ *       500:
+ *         description: Ошибка сервера
+ */
+
 router.post('/', async (req, res, next) => {
   const { name, email } = req.body;
 
@@ -24,16 +76,77 @@ router.post('/', async (req, res, next) => {
   res.status(201).json(user);
 });
 
-// GET /users
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Получить список всех пользователей
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: Список пользователей
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   name:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *       500:
+ *         description: Ошибка сервера
+ */
 router.get('/', async (req, res, next) => {
   const users = await User.findAll();
-const err = new Error('Тестовая ошибка');
-err.statusCode = 418; // I'm a teapot 😄
-throw err;
   res.json(users);
 });
 
-// GET /users/:id
+/**
+ * @swagger
+ * /users/{id}:
+ *   get:
+ *     summary: Получить пользователя по ID
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           pattern: '^[0-9]+$'
+ *           example: "1"
+ *         description: ID пользователя
+ *         example: 1
+ *     responses:
+ *       200:
+ *         description: Данные пользователя
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 name:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *       404:
+ *         description: Пользователь не найден
+ *       500:
+ *         description: Ошибка сервера
+ */
 router.get('/:id', async (req, res, next) => {
   const user = await User.findByPk(req.params.id);
 
