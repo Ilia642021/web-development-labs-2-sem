@@ -6,16 +6,25 @@ import sequelize from './config/db.js';
 import User from './models/User.js';
 import Event from './models/Event.js';
 
+import usersRouter from './routes/users.js';
+
+import morgan from 'morgan';
+
+import eventsRouter from './routes/events.js';
+
+
 const app = express();
 
+app.use(morgan('dev'));
 app.use(cors());
 app.use(express.json());
+app.use('/users', usersRouter);
+app.use('/events', eventsRouter);
 
 app.get('/', (req, res) => {
-  res.json({
-    message: 'Hello from Events API!',
-    status: 'ok',
-    time: new Date().toISOString()
+  res.json({ 
+    message: 'API работает!',
+    time: new Date().toISOString() 
   });
 });
 
