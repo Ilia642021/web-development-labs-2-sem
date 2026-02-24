@@ -1,26 +1,19 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import sequelize from './config/db.js';
-
-import User from './models/User.js';
-import Event from './models/Event.js';
-
-import usersRouter from './routes/users.js';
-
 import morgan from 'morgan';
-
-import eventsRouter from './routes/events.js';
-
 import rateLimiter from './middlewares/rateLimiter.js';
-
+import errorHandler from './middlewares/errorHandler.js';
+import sequelize from './config/db.js';
+import usersRouter from './routes/users.js';
+import eventsRouter from './routes/events.js';
 
 const app = express();
 
 app.use(morgan('dev'));
-app.use(rateLimiter);
 app.use(cors());
 app.use(express.json());
+app.use(rateLimiter);
 
 app.use('/users', usersRouter);
 app.use('/events', eventsRouter);
@@ -31,6 +24,8 @@ app.get('/', (req, res) => {
     time: new Date().toISOString() 
   });
 });
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
