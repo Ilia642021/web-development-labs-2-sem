@@ -6,9 +6,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
-    "start": "node index.js",
-    "kill-port": "fuser -k 5000/tcp || true",
-    "dev-clean": "npm run kill-port && npm run dev"
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",

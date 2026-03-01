@@ -1,8 +1,8 @@
 import rateLimit from 'express-rate-limit';
 
 const limiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 100,
+  windowMs: 60000,  // 60 секунд
+  max: 100,         // максимум 100 запросов за минуту
   message: { error: 'Слишком много запросов. Попробуйте снова через минуту.' },
   standardHeaders: true,
   legacyHeaders: false,

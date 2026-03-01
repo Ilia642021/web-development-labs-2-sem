@@ -1,6 +1,5 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
-import User from './User.js';
 
 const Event = sequelize.define('Event', {
   id: {
@@ -11,6 +10,7 @@ const Event = sequelize.define('Event', {
   title: {
     type: DataTypes.STRING,
     allowNull: false,
+    validate: { notEmpty: true },
   },
   description: {
     type: DataTypes.TEXT,
@@ -19,6 +19,7 @@ const Event = sequelize.define('Event', {
   date: {
     type: DataTypes.DATE,
     allowNull: false,
+    validate: { isDate: true },
   },
   createdBy: {
     type: DataTypes.INTEGER,
@@ -28,7 +29,6 @@ const Event = sequelize.define('Event', {
   timestamps: true,
 });
 
-Event.belongsTo(User, { foreignKey: 'createdBy' });
-User.hasMany(Event, { foreignKey: 'createdBy' });
+// Зависимости перенесены в models/associations.js, для избежания циклической зависимости
 
 export default Event;

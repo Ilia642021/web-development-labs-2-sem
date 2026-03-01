@@ -67,22 +67,7 @@ const router = express.Router();
  *         description: Ошибка сервера
  */
 router.post('/', async (req, res, next) => {
-  const { title, description, date, createdBy } = req.body;
-
-  if (!title || !date || !createdBy) {
-    const error = new Error('title, date и createdBy обязательны');
-    error.statusCode = 400;
-    return next(error);
-  }
-
-  const user = await User.findByPk(createdBy);
-  if (!user) {
-    const error = new Error('Пользователь с таким createdBy не найден');
-    error.statusCode = 404;
-    return next(error);
-  }
-
-  const event = await Event.create({ title, description, date, createdBy });
+  const event = await Event.create(req.body);
   res.status(201).json(event);
 });
 
@@ -153,10 +138,9 @@ router.get('/', async (req, res, next) => {
       total: count,
       page,
       limit,
-      totalPages: Math.ceil(count / limit),
-      hasNext: page * limit < count,
-      hasPrev: page > 1,
-    },
+      totalPages: Math.ceil(count / limit)
+      // hasNext и hasPrev УДАЛЯЕМ — считаем на клиенте
+    }
   });
 });
 

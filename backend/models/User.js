@@ -17,6 +17,7 @@ const User = sequelize.define('User', {
     unique: true,
     validate: {
       isEmail: true,
+      notEmpty: true,
     },
   },
   createdAt: {
@@ -24,7 +25,9 @@ const User = sequelize.define('User', {
     defaultValue: DataTypes.NOW,
   },
 }, {
-  timestamps: false, // createdAt уже вручную, updatedAt не нужен
+  timestamps: false,
 });
+
+// Зависимости перенесены в models/associations.js, для избежания циклической зависимости
 
 export default User;

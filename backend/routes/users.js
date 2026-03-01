@@ -6,8 +6,8 @@ const router = express.Router();
 /**
  * @swagger
  * tags:
- *   name: Users
- *   description: Операции с пользователями
+ *   - name: Users
+ *     description: Операции с пользователями
  */
 
 /**
@@ -28,51 +28,32 @@ const router = express.Router();
  *             properties:
  *               name:
  *                 type: string
+ *                 example: Алексей Иванов
  *               email:
  *                 type: string
  *                 format: email
+ *                 example: alex@example.com
  *     responses:
  *       201:
- *         description: Пользователь создан
+ *         description: Пользователь успешно создан
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 id:
- *                   type: integer
- *                 name:
- *                   type: string
- *                 email:
- *                   type: string
- *                 createdAt:
- *                   type: string
- *                   format: date-time
+ *                 id: { type: integer }
+ *                 name: { type: string }
+ *                 email: { type: string }
+ *                 createdAt: { type: string, format: date-time }
  *       400:
- *         description: Отсутствуют обязательные поля
+ *         description: Ошибка валидации (например, пустой email)
  *       409:
- *         description: Email уже существует
+ *         description: Пользователь с таким email уже существует
  *       500:
- *         description: Ошибка сервера
+ *         description: Внутренняя ошибка сервера
  */
-
 router.post('/', async (req, res, next) => {
-  const { name, email } = req.body;
-
-  if (!name || !email) {
-    const error = new Error('name и email обязательны');
-    error.statusCode = 400;
-    return next(error);
-  }
-
-  const existingUser = await User.findOne({ where: { email } });
-  if (existingUser) {
-    const error = new Error('Пользователь с таким email уже существует');
-    error.statusCode = 409;
-    return next(error);
-  }
-
-  const user = await User.create({ name, email });
+  const user = await User.create(req.body);
   res.status(201).json(user);
 });
 
@@ -92,17 +73,10 @@ router.post('/', async (req, res, next) => {
  *               items:
  *                 type: object
  *                 properties:
- *                   id:
- *                     type: integer
- *                   name:
- *                     type: string
- *                   email:
- *                     type: string
- *                   createdAt:
- *                     type: string
- *                     format: date-time
- *       500:
- *         description: Ошибка сервера
+ *                   id: { type: integer }
+ *                   name: { type: string }
+ *                   email: { type: string }
+ *                   createdAt: { type: string, format: date-time }
  */
 router.get('/', async (req, res, next) => {
   const users = await User.findAll();
@@ -116,18 +90,54 @@ router.get('/', async (req, res, next) => {
  *     summary: Получить пользователя по ID
  *     tags: [Users]
  *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID пользователя
+ *     responses:
+ *       200:
+ *         description: Пользователь найден
+ *       404:
+ *         description: Пользователь не найден
+ */
+router.get('/:id', async (req, res, next) => {
+  const user = await User.findByPk(req.params.id);
+  if (!user) return next({ statusCode: 404, message: 'Пользователь не найден' });
+  res.json(user);
+});
+
+/**
+ * @swagger
+ * /users/{id}:
+ *   put:
+ *     summary: Обновить данные пользователя
+ *     tags: [Users]
+ *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
- *           type: string
- *           pattern: '^[0-9]+$'
- *           example: "1"
+ *           type: integer
  *         description: ID пользователя
- *         example: 1
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Новое имя пользователя
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Новый email
  *     responses:
  *       200:
- *         description: Данные пользователя
+ *         description: Пользователь успешно обновлён
  *         content:
  *           application/json:
  *             schema:
@@ -142,21 +152,53 @@ router.get('/', async (req, res, next) => {
  *                 createdAt:
  *                   type: string
  *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Ошибка валидации (например, некорректный email)
+ *       404:
+ *         description: Пользователь не найден
+ *       409:
+ *         description: Email уже занят другим пользователем
+ *       500:
+ *         description: Внутренняя ошибка сервера
+ */
+router.put('/:id', async (req, res, next) => {
+  const user = await User.findByPk(req.params.id);
+  if (!user) return next({ statusCode: 404, message: 'Пользователь не найден' });
+
+  await user.update(req.body);
+  res.json(user);
+});
+
+/**
+ * @swagger
+ * /users/{id}:
+ *   delete:
+ *     summary: Удалить пользователя
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID пользователя
+ *     responses:
+ *       204:
+ *         description: Пользователь успешно удалён (нет содержимого)
  *       404:
  *         description: Пользователь не найден
  *       500:
- *         description: Ошибка сервера
+ *         description: Внутренняя ошибка сервера
  */
-router.get('/:id', async (req, res, next) => {
+router.delete('/:id', async (req, res, next) => {
   const user = await User.findByPk(req.params.id);
+  if (!user) return next({ statusCode: 404, message: 'Пользователь не найден' });
 
-  if (!user) {
-    const error = new Error('Пользователь не найден');
-    error.statusCode = 404;
-    return next(error);
-  }
-
-  res.json(user);
+  await user.destroy();
+  res.status(204).send();
 });
 
 export default router;

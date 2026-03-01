@@ -7,6 +7,7 @@ import rateLimiter from './middlewares/rateLimiter.js';
 import errorHandler from './middlewares/errorHandler.js';
 import usersRouter from './routes/users.js';
 import eventsRouter from './routes/events.js';
+import setupAssociations from './models/associations.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 
@@ -46,6 +47,15 @@ const swaggerOptions = {
     ],
     components: {
       schemas: {
+        User: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            name: { type: 'string' },
+            email: { type: 'string', format: 'email' },
+            createdAt: { type: 'string', format: 'date-time' }
+          }
+        },
         Event: {
           type: 'object',
           properties: {
@@ -61,7 +71,7 @@ const swaggerOptions = {
       }
     }
   },
-  apis: ['./routes/*.js'],
+  apis: ['./routes/*.js'], // должно быть относительно backend/
 };
 
 const specs = swaggerJsdoc(swaggerOptions);
@@ -75,19 +85,26 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
   `,
   customSiteTitle: 'Лаб 1 - API Мероприятий',
   swaggerOptions: {
-    docExpansion: 'list', // разворачивает все эндпоинты
+    docExpansion: 'list',
   },
 }));
 
-// Обработчик ошибок (последний middleware)
+// Обработчик ошибок — ПОСЛЕ всех роутов и Swagger
 app.use(errorHandler);
 
+// Запуск сервера после синхронизации
 const PORT = process.env.PORT || 5000;
 
-sequelize.sync({ alter: true })
-  .then(() => console.log('Таблицы синхронизированы (User и Event)'))
-  .catch(err => console.error('Ошибка синхронизации моделей:', err));
-
-app.listen(PORT, () => {
-  console.log(`Сервер запущен на http://localhost:${PORT}`);
-});
+(async () => {
+  try {
+    setupAssociations();
+    await sequelize.sync({ alter: true });
+    console.log('Таблицы синхронизированы (User и Event)');
+    app.listen(PORT, () => {
+      console.log(`Сервер запущен на http://localhost:${PORT}`);
+      console.log(`Swagger доступен по адресу: http://localhost:${PORT}/api-docs`);
+    });
+  } catch (err) {
+    console.error('Ошибка запуска сервера:', err);
+  }
+})();
