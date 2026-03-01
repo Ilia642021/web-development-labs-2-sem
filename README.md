@@ -85,6 +85,8 @@ web-development-labs/
   - POST /users — создать пользователя
   - GET /users — список всех
   - GET /users/:id — один пользователь
+  - PUT /users/:id - изменить пользователя
+  - DELETE /users/:id - удалить пользователя
 
 - **Мероприятия**
   - POST /events — создать мероприятие (обязательно createdBy)
