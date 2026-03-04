@@ -67,7 +67,18 @@ const router = express.Router();
  *         description: Ошибка сервера
  */
 router.post('/', async (req, res, next) => {
-  const event = await Event.create(req.body);
+  const { title, description, date, createdBy } = req.body;
+
+  // НЕ проверяем !title, !date, !createdBy — это делает модель
+
+  // Только проверяем существование пользователя (бизнес-логика)
+  const user = await User.findByPk(createdBy);
+  if (!user) {
+    return next({ statusCode: 400, message: 'Пользователь с таким createdBy не найден' });
+  }
+
+  // Создаём — если что-то не так с title/date — модель кинет ValidationError
+  const event = await Event.create({ title, description, date, createdBy });
   res.status(201).json(event);
 });
 
@@ -128,7 +139,7 @@ router.get('/', async (req, res, next) => {
   const { count, rows: events } = await Event.findAndCountAll({
     limit,
     offset,
-    include: [{ model: User, attributes: ['id', 'name', 'email'] }],
+    include: [{ model: User,as: 'Creator', attributes: ['id', 'name', 'email'] }],
     order: [['createdAt', 'DESC']],
   });
 
@@ -195,7 +206,7 @@ router.get('/', async (req, res, next) => {
  */
 router.get('/:id', async (req, res, next) => {
   const event = await Event.findByPk(req.params.id, {
-    include: [{ model: User, attributes: ['id', 'name', 'email'] }],
+    include: [{ model: User, as: 'Creator', attributes: ['id', 'name', 'email'] }],
   });
 
   if (!event) {
