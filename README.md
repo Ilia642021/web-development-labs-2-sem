@@ -74,8 +74,13 @@ web-development-labs/
 
 4. Запустить сервер:
    ```bash
-   npm run dev-clean   # убивает старые процессы и запускает nodemon
+   sudo lsof -i :5000
+   sudo kill -9 PID
+   npm run dev
    ```
+
+5. Зайти в psql (пароль подставляться из ~/.pgpass)
+   psql -U student -d events_db -h localhost
 
 ### Доступные эндпоинты
 
