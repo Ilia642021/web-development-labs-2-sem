@@ -1,6 +1,7 @@
 import express from 'express';
 import Event from '../models/Event.js';
 import User from '../models/User.js';
+import { authenticateJwt } from '../config/passport.js';   // добавлен импорт middleware
 
 const router = express.Router();
 
@@ -66,18 +67,16 @@ const router = express.Router();
  *       500:
  *         description: Ошибка сервера
  */
-router.post('/', async (req, res, next) => {
+router.post('/', authenticateJwt, async (req, res, next) => {
   const { title, description, date, createdBy } = req.body;
 
-  // НЕ проверяем !title, !date, !createdBy — это делает модель
-
-  // Только проверяем существование пользователя (бизнес-логика)
+  // Проверяем существование пользователя (бизнес-логика)
   const user = await User.findByPk(createdBy);
   if (!user) {
     return next({ statusCode: 400, message: 'Пользователь с таким createdBy не найден' });
   }
 
-  // Создаём — если что-то не так с title/date — модель кинет ValidationError
+  // Создаём мероприятие
   const event = await Event.create({ title, description, date, createdBy });
   res.status(201).json(event);
 });
@@ -124,13 +123,10 @@ router.post('/', async (req, res, next) => {
  *                       type: integer
  *                     totalPages:
  *                       type: integer
- *                     hasNext:
- *                       type: boolean
- *                     hasPrev:
- *                       type: boolean
  *       500:
  *         description: Ошибка сервера
  */
+// Публичный маршрут – без authenticateJwt
 router.get('/', async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
@@ -139,7 +135,7 @@ router.get('/', async (req, res, next) => {
   const { count, rows: events } = await Event.findAndCountAll({
     limit,
     offset,
-    include: [{ model: User,as: 'Creator', attributes: ['id', 'name', 'email'] }],
+    include: [{ model: User, as: 'Creator', attributes: ['id', 'name', 'email'] }],
     order: [['createdAt', 'DESC']],
   });
 
@@ -150,7 +146,6 @@ router.get('/', async (req, res, next) => {
       page,
       limit,
       totalPages: Math.ceil(count / limit)
-      // hasNext и hasPrev УДАЛЯЕМ — считаем на клиенте
     }
   });
 });
@@ -204,7 +199,7 @@ router.get('/', async (req, res, next) => {
  *       500:
  *         description: Ошибка сервера
  */
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', authenticateJwt, async (req, res, next) => {
   const event = await Event.findByPk(req.params.id, {
     include: [{ model: User, as: 'Creator', attributes: ['id', 'name', 'email'] }],
   });
@@ -257,7 +252,7 @@ router.get('/:id', async (req, res, next) => {
  *       500:
  *         description: Ошибка сервера
  */
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', authenticateJwt, async (req, res, next) => {
   const event = await Event.findByPk(req.params.id);
 
   if (!event) {
@@ -291,7 +286,7 @@ router.put('/:id', async (req, res, next) => {
  *       500:
  *         description: Ошибка сервера
  */
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', authenticateJwt, async (req, res, next) => {
   const event = await Event.findByPk(req.params.id);
 
   if (!event) {
