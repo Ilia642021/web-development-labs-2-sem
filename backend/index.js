@@ -5,8 +5,10 @@ import morgan from 'morgan';
 import sequelize from './config/db.js';
 import rateLimiter from './middlewares/rateLimiter.js';
 import errorHandler from './middlewares/errorHandler.js';
+import passport from './config/passport.js';
 import usersRouter from './routes/users.js';
 import eventsRouter from './routes/events.js';
+import authRouter from './routes/auth.js';
 import setupAssociations from './models/associations.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
@@ -22,6 +24,7 @@ app.use(rateLimiter);
 // Маршруты API
 app.use('/users', usersRouter);
 app.use('/events', eventsRouter);
+app.use('/auth', authRouter);
 
 // Корневой маршрут
 app.get('/', (req, res) => {
@@ -38,7 +41,7 @@ const swaggerOptions = {
     info: {
       title: 'API Управления Мероприятиями',
       version: '1.0.0',
-      description: 'REST API для лабораторной работы №1 (вариант 19)',
+      description: 'REST API для лабораторной работы №2 (аутентификация + JWT, вариант 19)',
     },
     servers: [
       {
@@ -46,6 +49,14 @@ const swaggerOptions = {
       },
     ],
     components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'JWT-токен, полученный после /auth/login. Вставлять в формате: Bearer <token>'
+        }
+      },
       schemas: {
         User: {
           type: 'object',
@@ -69,9 +80,14 @@ const swaggerOptions = {
           }
         }
       }
-    }
+    },
+    security: [
+      {
+        bearerAuth: []
+      }
+    ]
   },
-  apis: ['./routes/*.js'], // должно быть относительно backend/
+  apis: ['./routes/*.js'],
 };
 
 const specs = swaggerJsdoc(swaggerOptions);

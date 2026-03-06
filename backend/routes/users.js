@@ -1,13 +1,14 @@
 import express from 'express';
 import User from '../models/User.js';
+import { authenticateJwt } from '../config/passport.js';   // ← добавляем это
 
 const router = express.Router();
 
 /**
  * @swagger
  * tags:
- *   - name: Users
- *     description: Операции с пользователями
+ *   name: Users
+ *   description: Операции с пользователями
  */
 
 /**
@@ -16,6 +17,8 @@ const router = express.Router();
  *   post:
  *     summary: Создать нового пользователя
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []               # ← добавляем замочек (требуется токен)
  *     requestBody:
  *       required: true
  *       content:
@@ -36,23 +39,16 @@ const router = express.Router();
  *     responses:
  *       201:
  *         description: Пользователь успешно создан
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 id: { type: integer }
- *                 name: { type: string }
- *                 email: { type: string }
- *                 createdAt: { type: string, format: date-time }
  *       400:
- *         description: Ошибка валидации (например, пустой email)
+ *         description: Ошибка валидации
+ *       401:
+ *         description: Не авторизован
  *       409:
  *         description: Пользователь с таким email уже существует
  *       500:
- *         description: Внутренняя ошибка сервера
+ *         description: Внутренняя ошибка
  */
-router.post('/', async (req, res, next) => {
+router.post('/', authenticateJwt, async (req, res, next) => {
   const user = await User.create(req.body);
   res.status(201).json(user);
 });
@@ -63,22 +59,15 @@ router.post('/', async (req, res, next) => {
  *   get:
  *     summary: Получить список всех пользователей
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []               # ← добавляем
  *     responses:
  *       200:
  *         description: Список пользователей
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id: { type: integer }
- *                   name: { type: string }
- *                   email: { type: string }
- *                   createdAt: { type: string, format: date-time }
+ *       401:
+ *         description: Не авторизован
  */
-router.get('/', async (req, res, next) => {
+router.get('/', authenticateJwt, async (req, res, next) => {
   const users = await User.findAll();
   res.json(users);
 });
@@ -89,20 +78,23 @@ router.get('/', async (req, res, next) => {
  *   get:
  *     summary: Получить пользователя по ID
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []               # ← добавляем
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID пользователя
  *     responses:
  *       200:
  *         description: Пользователь найден
+ *       401:
+ *         description: Не авторизован
  *       404:
  *         description: Пользователь не найден
  */
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', authenticateJwt, async (req, res, next) => {
   const user = await User.findByPk(req.params.id);
   if (!user) return next({ statusCode: 404, message: 'Пользователь не найден' });
   res.json(user);
@@ -114,13 +106,14 @@ router.get('/:id', async (req, res, next) => {
  *   put:
  *     summary: Обновить данные пользователя
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []               # ← добавляем
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID пользователя
  *     requestBody:
  *       required: true
  *       content:
@@ -130,44 +123,22 @@ router.get('/:id', async (req, res, next) => {
  *             properties:
  *               name:
  *                 type: string
- *                 description: Новое имя пользователя
  *               email:
  *                 type: string
  *                 format: email
- *                 description: Новый email
  *     responses:
  *       200:
  *         description: Пользователь успешно обновлён
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: integer
- *                 name:
- *                   type: string
- *                 email:
- *                   type: string
- *                 createdAt:
- *                   type: string
- *                   format: date-time
- *                 updatedAt:
- *                   type: string
- *                   format: date-time
- *       400:
- *         description: Ошибка валидации (например, некорректный email)
+ *       401:
+ *         description: Не авторизован
  *       404:
  *         description: Пользователь не найден
  *       409:
- *         description: Email уже занят другим пользователем
- *       500:
- *         description: Внутренняя ошибка сервера
+ *         description: Email уже занят
  */
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', authenticateJwt, async (req, res, next) => {
   const user = await User.findByPk(req.params.id);
   if (!user) return next({ statusCode: 404, message: 'Пользователь не найден' });
-
   await user.update(req.body);
   res.json(user);
 });
@@ -178,25 +149,25 @@ router.put('/:id', async (req, res, next) => {
  *   delete:
  *     summary: Удалить пользователя
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []               # ← добавляем
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID пользователя
  *     responses:
  *       204:
- *         description: Пользователь успешно удалён (нет содержимого)
+ *         description: Пользователь успешно удалён
+ *       401:
+ *         description: Не авторизован
  *       404:
  *         description: Пользователь не найден
- *       500:
- *         description: Внутренняя ошибка сервера
  */
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', authenticateJwt, async (req, res, next) => {
   const user = await User.findByPk(req.params.id);
   if (!user) return next({ statusCode: 404, message: 'Пользователь не найден' });
-
   await user.destroy();
   res.status(204).send();
 });
